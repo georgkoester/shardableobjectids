@@ -1,5 +1,7 @@
 package shardableobjectids;
-
+/*
+ * Copyright Georg Koester 2012. Licensed under Apache License 2.0
+ */
 import static org.junit.Assert.*;
 
 import org.junit.Test;

@@ -4,7 +4,7 @@ package shardableobjectids;
 
 /**
  * Inspired by ObjectId of org.bson.types.
- * Copyright (C) 2012 Georg Koester.
+ * Copyright (C) 2012 Georg Koester, Licensed under Apache License 2.0
  *
  * Huge Parts:   Copyright (C) 2008 10gen Inc.
  *
@@ -26,7 +26,7 @@ import java.nio.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
-import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Base64Mod;
 import org.bson.types.ObjectId;
 
 /**
@@ -77,7 +77,7 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
                 return false;
             }
         } else if (len == 22) {
-            if (!Base64.isBase64(s)) {
+            if (!Base64Mod.isBase64(s)) {
                 return false;
             }
         } else {
@@ -174,7 +174,7 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
 
         byte b[];
         if (s.length() == 22) {
-            b = Base64.decodeBase64(s);
+            b = Base64Mod.decodeBase64(s);
         } else {
             b = new byte[16];
             for (int i = 0; i < b.length; i++) {
@@ -183,7 +183,7 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
         }
 
         ByteBuffer bb = ByteBuffer.wrap(b);
-        _month = bb.getInt();
+        _month = bb.getInt()>>2;
         _machine = bb.getInt();
         _time = bb.getInt();
         _inc = bb.getInt();
@@ -194,7 +194,7 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
         if (b.length != 16)
             throw new IllegalArgumentException("need 16 bytes");
         ByteBuffer bb = ByteBuffer.wrap(b);
-        _month = bb.getInt();
+        _month = bb.getInt()>>2;
         _machine = bb.getInt();
         _time = bb.getInt();
         _inc = bb.getInt();
@@ -284,7 +284,7 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
         // but for now we live with it. In my use case probably only
         // used for creation - which for me is not a loop activity.
         // Slow why: newing and copying multiple times.
-        return new Base64(true).encodeAsString(toByteArray()).trim();
+        return new Base64Mod(true).encodeAsString(toByteArray()).trim();
     }
 
 
@@ -292,7 +292,9 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
         byte b[] = new byte[16];
         ByteBuffer bb = ByteBuffer.wrap(b);
         // by default BB is big endian like we need
-        bb.putInt(_month);
+        // Georg: need to shift month a bit so that all bits
+        // stay in the first 5 characters after base64 encoding
+        bb.putInt(_month<<2);
         bb.putInt(_machine);
         bb.putInt(_time);
         bb.putInt(_inc);

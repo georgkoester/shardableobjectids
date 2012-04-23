@@ -4,7 +4,7 @@ package shardableobjectids;
 
 /**
  * Inspired by ObjectId of org.bson.types.
- * Copyright (C) 2012 Georg Koester.
+ * Copyright Georg Koester 2012. Licensed under Apache License 2.0
  *
  * Huge Parts:   Copyright (C) 2008 10gen Inc.
  *
