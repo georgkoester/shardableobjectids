@@ -284,7 +284,8 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
         // but for now we live with it. In my use case probably only
         // used for creation - which for me is not a loop activity.
         // Slow why: newing and copying multiple times.
-        return new Base64Mod(true).encodeAsString(toByteArray()).trim();
+        return new Base64Mod(0 // no chunking
+                             , null, true).encodeAsString(toByteArray()).trim();
     }
 
 

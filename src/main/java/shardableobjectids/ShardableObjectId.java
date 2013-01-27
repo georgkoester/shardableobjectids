@@ -270,7 +270,8 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
         // but for now we live with it. In my use case probably only
         // used for creation - which for me is not a loop activity.
         // Slow why: newing and copying multiple times.
-        return new Base64(true).encodeAsString(toByteArray()).trim();
+        return new Base64(0 // no chunking
+                          , null, true).encodeAsString(toByteArray()).trim();
     }
 
     public byte[] toByteArray() {
