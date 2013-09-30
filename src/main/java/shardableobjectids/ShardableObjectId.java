@@ -1,7 +1,5 @@
 package shardableobjectids;
 
-//ObjectId.java
-
 /**
  * Inspired by ObjectId of org.bson.types.
  * Copyright Georg Koester 2012. Licensed under Apache License 2.0
@@ -21,33 +19,37 @@ package shardableobjectids;
  *   limitations under the License.
  */
 
-
-import java.nio.*;
-import java.util.*;
-import java.util.concurrent.atomic.*;
+import java.nio.ByteBuffer;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.codec.binary.Base64;
 import org.bson.types.ObjectId;
 
 /**
  * A globally unique identifier for objects.
- * <p>Consists of 12 bytes, divided as follows:
- * <blockquote><pre>
+ * <p>
+ * Consists of 12 bytes, divided as follows: <blockquote>
+ * 
+ * <pre>
  * <table border="1">
  * <tr><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td>
  *     <td>7</td><td>8</td><td>9</td><td>10</td><td>11</td></tr>
  * <tr><td colspan="3">machine</td><td colspan="2">pid</td>
  *     <td colspan="4">time</td><td colspan="3">inc</td></tr>
  * </table>
- * </pre></blockquote>
+ * </pre>
+ * 
+ * </blockquote>
  */
-public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io.Serializable {
+public class ShardableObjectId implements Comparable<ShardableObjectId>,
+        java.io.Serializable {
 
     private static final long serialVersionUID = -4415279469780082175L;
 
     /**
      * Gets a new object id.
-     *
+     * 
      * @return the new id
      */
     public static ShardableObjectId get() {
@@ -56,7 +58,7 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
 
     /**
      * Checks if a string could be an <code>ShardableObjectId</code>.
-     *
+     * 
      * @return whether the string could be a shardable object id
      */
     public static boolean isValid(String s) {
@@ -77,7 +79,7 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
                 return false;
             }
         } else if (len == 16) {
-            if (!Base64.isBase64(s)) {
+            if (!Base64Mod.isBase64(s)) {
                 return false;
             }
         } else {
@@ -89,11 +91,14 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
 
     /**
      * Turn an object into an <code>ShardableObjectId</code>, if possible.
-     * Strings will be converted into <code>ShardableObjectId</code>s, if possible, and <code>ShardableObjectId</code>s will
-     * be cast and returned.  Passing in <code>null</code> returns <code>null</code>.
-     *
-     * @param o the object to convert
-     * @return an <code>ShardableObjectId</code> if it can be massaged, null otherwise
+     * Strings will be converted into <code>ShardableObjectId</code>s, if
+     * possible, and <code>ShardableObjectId</code>s will be cast and returned.
+     * Passing in <code>null</code> returns <code>null</code>.
+     * 
+     * @param o
+     *            the object to convert
+     * @return an <code>ShardableObjectId</code> if it can be massaged, null
+     *         otherwise
      */
     public static ShardableObjectId massageToObjectId(Object o) {
         if (o == null)
@@ -111,30 +116,18 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
         return null;
     }
 
-    /* somehow didn't work for me:
-	private static Boolean staticLock = new Boolean(true);
-	private static boolean registeredBSONCodecs = false;
-
-	public static void registerBSONCodecs() {
-		synchronized (staticLock) {
-			if (!registeredBSONCodecs) {
-				BSON.addEncodingHook(ShardableObjectId.class,
-						new Transformer() {
-
-							public Object transform(Object o) {
-								if (o instanceof ShardableObjectId) {
-									return ((ShardableObjectId) o)
-													.toByteArray();
-								} else {
-									return o;
-								}
-							}
-						});
-				registeredBSONCodecs = true;
-			}
-		}
- }
- */
+    /*
+     * somehow didn't work for me: private static Boolean staticLock = new
+     * Boolean(true); private static boolean registeredBSONCodecs = false;
+     * 
+     * public static void registerBSONCodecs() { synchronized (staticLock) { if
+     * (!registeredBSONCodecs) { BSON.addEncodingHook(ShardableObjectId.class,
+     * new Transformer() {
+     * 
+     * public Object transform(Object o) { if (o instanceof ShardableObjectId) {
+     * return ((ShardableObjectId) o) .toByteArray(); } else { return o; } } });
+     * registeredBSONCodecs = true; } } }
+     */
 
     public ShardableObjectId(Date time) {
         this(time, getGenMachineId(), _nextInc.getAndIncrement());
@@ -153,9 +146,11 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
 
     /**
      * Creates a new instance from a string.
-     *
-     * @param s the string to convert
-     * @throws IllegalArgumentException if the string is not a valid id
+     * 
+     * @param s
+     *            the string to convert
+     * @throws IllegalArgumentException
+     *             if the string is not a valid id
      */
     public ShardableObjectId(String s) {
         this(s, false);
@@ -164,18 +159,20 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
     public ShardableObjectId(String s, boolean babble) {
 
         if (!isValid(s))
-            throw new IllegalArgumentException("invalid ShardableObjectId [" + s + "]");
+            throw new IllegalArgumentException("invalid ShardableObjectId ["
+                    + s + "]");
 
         if (babble)
             s = babbleToMongod(s);
 
         byte b[];
         if (s.length() == 16) {
-            b = Base64.decodeBase64(s);
+            b = Base64Mod.decode(s);
         } else {
             b = new byte[12];
             for (int i = 0; i < b.length; i++) {
-                b[i] = (byte) Integer.parseInt(s.substring(i * 2, i * 2 + 2), 16);
+                b[i] = (byte) Integer.parseInt(s.substring(i * 2, i * 2 + 2),
+                        16);
             }
         }
 
@@ -184,6 +181,17 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
         _time = bb.getInt();
         _inc = bb.getInt();
         _new = false;
+    }
+
+    /**
+     * Parses pre-2.0 toString-data.
+     * 
+     * @param s
+     * @return
+     * @since 2.0
+     */
+    public static ShardableObjectId parseNormalBase64(String s) {
+        return new ShardableObjectId(Base64.decodeBase64(s));
     }
 
     public ShardableObjectId(byte[] b) {
@@ -198,10 +206,13 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
 
     /**
      * Creates a ShardableObjectId
-     *
-     * @param time    time in seconds
-     * @param machine machine ID
-     * @param inc     incremental value
+     * 
+     * @param time
+     *            time in seconds
+     * @param machine
+     *            machine ID
+     * @param inc
+     *            incremental value
      */
     public ShardableObjectId(int time, int machine, int inc) {
         _time = time;
@@ -239,10 +250,8 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
         if (other == null)
             return false;
 
-        return
-                _time == other._time &&
-                        _machine == other._machine &&
-                        _inc == other._inc;
+        return _time == other._time && _machine == other._machine
+                && _inc == other._inc;
     }
 
     public String toStringBabble() {
@@ -265,13 +274,29 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
         return buf.toString();
     }
 
+    /**
+     * 
+     * @return
+     * @since 2.0
+     */
+    public String toStringSortableBase64URLSafe() {
+        return Base64Mod.encodeToString(toByteArray());
+    }
+
+    /**
+     * 
+     * @return
+     * @deprecated use {@link #toStringSortableBase64URLSafe()} which is parsed
+     *             by {@link ShardableObjectId#ShardableObjectId(String)}
+     */
+    @Deprecated
     public String toStringBase64URLSafe() {
         // Georg.Koester: this operation is so slow I cannot believe it,
         // but for now we live with it. In my use case probably only
         // used for creation - which for me is not a loop activity.
         // Slow why: newing and copying multiple times.
         return new Base64(0 // no chunking
-                          , null, true).encodeAsString(toByteArray()).trim();
+                , null, true).encodeAsString(toByteArray()).trim();
     }
 
     public byte[] toByteArray() {
@@ -290,7 +315,8 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
 
     public static String babbleToMongod(String b) {
         if (!isValid(b))
-            throw new IllegalArgumentException("invalid shardable object id: " + b);
+            throw new IllegalArgumentException("invalid shardable object id: "
+                    + b);
 
         StringBuilder buf = new StringBuilder(24);
         for (int i = 7; i >= 0; i--)
@@ -303,7 +329,7 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
 
     @Override
     public String toString() {
-        return toStringBase64URLSafe();
+        return toStringSortableBase64URLSafe();
     }
 
     int _compareUnsigned(int i, int j) {
@@ -320,9 +346,9 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
     }
 
     /**
-     * Ordering here is by machine,time,inc - so
-     * follows the distribution on the machines.
-     *
+     * Ordering here is by machine,time,inc - so follows the distribution on the
+     * machines.
+     * 
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     public int compareTo(ShardableObjectId id) {
@@ -346,7 +372,7 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
 
     /**
      * Gets the time of this ID, in milliseconds
-     *
+     * 
      * @return
      */
     public long getTime() {
@@ -355,7 +381,7 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
 
     /**
      * Gets the time of this ID, in seconds
-     *
+     * 
      * @return
      */
     public int getTimeSecond() {
@@ -387,8 +413,9 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
     }
 
     /**
-     * Gets the generated machine ID, identifying the machine / process / class loader
-     *
+     * Gets the generated machine ID, identifying the machine / process / class
+     * loader
+     * 
      * @return
      */
     public static int getGenMachineId() {
@@ -397,7 +424,7 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
 
     /**
      * Gets the current value of the auto increment
-     *
+     * 
      * @return
      */
     public static int getCurrentInc() {
@@ -419,6 +446,7 @@ public class ShardableObjectId implements Comparable<ShardableObjectId>, java.io
         return z;
     }
 
-    private static AtomicInteger _nextInc = new AtomicInteger((new java.util.Random()).nextInt());
+    private static AtomicInteger _nextInc = new AtomicInteger(
+            (new java.util.Random()).nextInt());
 
 }

@@ -21,33 +21,37 @@ package shardableobjectids;
  *   limitations under the License.
  */
 
+import java.nio.ByteBuffer;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import java.nio.*;
-import java.util.*;
-import java.util.concurrent.atomic.*;
-
-import org.apache.commons.codec.binary.Base64Mod;
 import org.bson.types.ObjectId;
 
 /**
  * A globally unique identifier for objects.
- * <p>Consists of 16 bytes, divided as follows:
- * <blockquote><pre>
+ * <p>
+ * Consists of 16 bytes, divided as follows: <blockquote>
+ * 
+ * <pre>
  * <table border="1">
  * <tr><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td>
  *     <td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td></tr>
  * <tr><td colspan="4">month eg. 201201</td><td colspan="3">machine</td><td colspan="2">pid</td>
  *     <td colspan="4">time</td><td colspan="3">inc</td></tr>
  * </table>
- * </pre></blockquote>
+ * </pre>
+ * 
+ * </blockquote>
  */
-public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObjectIdWithMoPrefix>, java.io.Serializable {
+public class ShardableObjectIdWithMoPrefix implements
+        Comparable<ShardableObjectIdWithMoPrefix>, java.io.Serializable {
 
     private static final long serialVersionUID = -4415279469780082175L;
 
     /**
      * Gets a new object id.
-     *
+     * 
      * @return the new id
      */
     public static ShardableObjectIdWithMoPrefix get() {
@@ -55,8 +59,9 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
     }
 
     /**
-     * Checks if a string could be an <code>ShardableObjectIdWithMoPrefix</code>.
-     *
+     * Checks if a string could be an <code>ShardableObjectIdWithMoPrefix</code>
+     * .
+     * 
      * @return whether the string could be a shardable object id
      */
     public static boolean isValid(String s) {
@@ -88,12 +93,16 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
     }
 
     /**
-     * Turn an object into an <code>ShardableObjectIdWithMoPrefix</code>, if possible.
-     * Strings will be converted into <code>ShardableObjectIdWithMoPrefix</code>s, if possible, and <code>ShardableObjectId</code>s will
-     * be cast and returned.  Passing in <code>null</code> returns <code>null</code>.
-     *
-     * @param o the object to convert
-     * @return an <code>ShardableObjectIdWithMoPrexi</code> if it can be massaged, null otherwise
+     * Turn an object into an <code>ShardableObjectIdWithMoPrefix</code>, if
+     * possible. Strings will be converted into
+     * <code>ShardableObjectIdWithMoPrefix</code>s, if possible, and
+     * <code>ShardableObjectId</code>s will be cast and returned. Passing in
+     * <code>null</code> returns <code>null</code>.
+     * 
+     * @param o
+     *            the object to convert
+     * @return an <code>ShardableObjectIdWithMoPrexi</code> if it can be
+     *         massaged, null otherwise
      */
     public static ShardableObjectIdWithMoPrefix massageToObjectId(Object o) {
         if (o == null)
@@ -111,30 +120,20 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
         return null;
     }
 
-    /* somehow didn't work for me:
-	private static Boolean staticLock = new Boolean(true);
-	private static boolean registeredBSONCodecs = false;
-
-	public static void registerBSONCodecs() {
-		synchronized (staticLock) {
-			if (!registeredBSONCodecs) {
-				BSON.addEncodingHook(ShardableObjectIdWithMoPrefix.class,
-						new Transformer() {
-
-							public Object transform(Object o) {
-								if (o instanceof ShardableObjectIdWithMoPrefix) {
-									return ((ShardableObjectIdWithMoPrefix) o)
-													.toByteArray();
-								} else {
-									return o;
-								}
-							}
-						});
-				registeredBSONCodecs = true;
-			}
-		}
-}
- */
+    /*
+     * somehow didn't work for me: private static Boolean staticLock = new
+     * Boolean(true); private static boolean registeredBSONCodecs = false;
+     * 
+     * public static void registerBSONCodecs() { synchronized (staticLock) { if
+     * (!registeredBSONCodecs) {
+     * BSON.addEncodingHook(ShardableObjectIdWithMoPrefix.class, new
+     * Transformer() {
+     * 
+     * public Object transform(Object o) { if (o instanceof
+     * ShardableObjectIdWithMoPrefix) { return ((ShardableObjectIdWithMoPrefix)
+     * o) .toByteArray(); } else { return o; } } }); registeredBSONCodecs =
+     * true; } } }
+     */
 
     public ShardableObjectIdWithMoPrefix(Date time) {
         this(time, getGenMachineId(), _nextInc.getAndIncrement());
@@ -147,7 +146,8 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
     public ShardableObjectIdWithMoPrefix(Date time, int machine, int inc) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(time);
-        _month = calendar.get(Calendar.YEAR) * 100 + calendar.get(Calendar.MONTH) + 1;
+        _month = calendar.get(Calendar.YEAR) * 100
+                + calendar.get(Calendar.MONTH) + 1;
         _time = (int) (time.getTime() / 1000);
         _machine = machine;
         _inc = inc;
@@ -156,9 +156,11 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
 
     /**
      * Creates a new instance from a string.
-     *
-     * @param s the string to convert
-     * @throws IllegalArgumentException if the string is not a valid id
+     * 
+     * @param s
+     *            the string to convert
+     * @throws IllegalArgumentException
+     *             if the string is not a valid id
      */
     public ShardableObjectIdWithMoPrefix(String s) {
         this(s, false);
@@ -167,23 +169,25 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
     public ShardableObjectIdWithMoPrefix(String s, boolean babble) {
 
         if (!isValid(s))
-            throw new IllegalArgumentException("invalid ShardableObjectIdWithMoPrefix [" + s + "]");
+            throw new IllegalArgumentException(
+                    "invalid ShardableObjectIdWithMoPrefix [" + s + "]");
 
         if (babble)
             s = babbleToMongod(s);
 
         byte b[];
         if (s.length() == 22) {
-            b = Base64Mod.decodeBase64(s);
+            b = Base64Mod.decode(s);
         } else {
             b = new byte[16];
             for (int i = 0; i < b.length; i++) {
-                b[i] = (byte) Integer.parseInt(s.substring(i * 2, i * 2 + 2), 16);
+                b[i] = (byte) Integer.parseInt(s.substring(i * 2, i * 2 + 2),
+                        16);
             }
         }
 
         ByteBuffer bb = ByteBuffer.wrap(b);
-        _month = bb.getInt()>>2;
+        _month = bb.getInt() >> 2;
         _machine = bb.getInt();
         _time = bb.getInt();
         _inc = bb.getInt();
@@ -194,7 +198,7 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
         if (b.length != 16)
             throw new IllegalArgumentException("need 16 bytes");
         ByteBuffer bb = ByteBuffer.wrap(b);
-        _month = bb.getInt()>>2;
+        _month = bb.getInt() >> 2;
         _machine = bb.getInt();
         _time = bb.getInt();
         _inc = bb.getInt();
@@ -203,15 +207,19 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
 
     /**
      * Creates a ShardableObjectIdWithMoPrefix
-     *
-     * @param time    time in seconds
-     * @param machine machine ID
-     * @param inc     incremental value
+     * 
+     * @param time
+     *            time in seconds
+     * @param machine
+     *            machine ID
+     * @param inc
+     *            incremental value
      */
     public ShardableObjectIdWithMoPrefix(int time, int machine, int inc) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date(time * 1000L));
-        _month = calendar.get(Calendar.YEAR) * 100 + calendar.get(Calendar.MONTH) + 1;
+        _month = calendar.get(Calendar.YEAR) * 100
+                + calendar.get(Calendar.MONTH) + 1;
         _time = time;
         _machine = machine;
         _inc = inc;
@@ -252,11 +260,12 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
         if (other == null)
             return false;
 
-        return
-                _time == other._time &&
-                        _machine == other._machine &&
-                        _inc == other._inc &&
-                        _month == other._month; // (because there might be different calendars involved!)
+        return _time == other._time && _machine == other._machine
+                && _inc == other._inc && _month == other._month; // (because
+                                                                 // there might
+                                                                 // be different
+                                                                 // calendars
+                                                                 // involved!)
     }
 
     public String toStringBabble() {
@@ -279,15 +288,25 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
         return buf.toString();
     }
 
-    public String toStringBase64URLSafe() {
-        // Georg.Koester: this operation is so slow I cannot believe it,
-        // but for now we live with it. In my use case probably only
-        // used for creation - which for me is not a loop activity.
-        // Slow why: newing and copying multiple times.
-        return new Base64Mod(0 // no chunking
-                             , null, true).encodeAsString(toByteArray()).trim();
+    /**
+     * Same as {@link #toStringBase64URLSafe()}, but new interface makes
+     * sortability and non-standard-Base64 obvious.
+     * 
+     * @return
+     */
+    public String toStringSortableBase64URLSafe() {
+        return Base64Mod.encodeToString(toByteArray());
     }
 
+    /**
+     * 
+     * @return
+     * @deprecated
+     */
+    @Deprecated
+    public String toStringBase64URLSafe() {
+        return Base64Mod.encodeToString(toByteArray());
+    }
 
     public byte[] toByteArray() {
         byte b[] = new byte[16];
@@ -295,7 +314,7 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
         // by default BB is big endian like we need
         // Georg: need to shift month a bit so that all bits
         // stay in the first 5 characters after base64 encoding
-        bb.putInt(_month<<2);
+        bb.putInt(_month << 2);
         bb.putInt(_machine);
         bb.putInt(_time);
         bb.putInt(_inc);
@@ -308,7 +327,8 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
 
     public static String babbleToMongod(String b) {
         if (!isValid(b))
-            throw new IllegalArgumentException("invalid shardable object id: " + b);
+            throw new IllegalArgumentException("invalid shardable object id: "
+                    + b);
 
         StringBuilder buf = new StringBuilder(32);
         for (int i = 7; i >= 0; i--)
@@ -321,7 +341,7 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
 
     @Override
     public String toString() {
-        return toStringBase64URLSafe();
+        return toStringSortableBase64URLSafe();
     }
 
     int _compareUnsigned(int i, int j) {
@@ -338,9 +358,9 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
     }
 
     /**
-     * Ordering here is by month,machine,time,inc - so
-     * follows the distribution on the machines.
-     *
+     * Ordering here is by month,machine,time,inc - so follows the distribution
+     * on the machines.
+     * 
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     public int compareTo(ShardableObjectIdWithMoPrefix id) {
@@ -372,7 +392,7 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
 
     /**
      * Gets the time of this ID, in milliseconds
-     *
+     * 
      * @return
      */
     public long getTime() {
@@ -381,7 +401,7 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
 
     /**
      * Gets the time of this ID, in seconds
-     *
+     * 
      * @return
      */
     public int getTimeSecond() {
@@ -413,8 +433,9 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
     }
 
     /**
-     * Gets the generated machine ID, identifying the machine / process / class loader
-     *
+     * Gets the generated machine ID, identifying the machine / process / class
+     * loader
+     * 
      * @return
      */
     public static int getGenMachineId() {
@@ -423,7 +444,7 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
 
     /**
      * Gets the current value of the auto increment
-     *
+     * 
      * @return
      */
     public static int getCurrentInc() {
@@ -446,6 +467,7 @@ public class ShardableObjectIdWithMoPrefix implements Comparable<ShardableObject
         return z;
     }
 
-    private static AtomicInteger _nextInc = new AtomicInteger((new java.util.Random()).nextInt());
+    private static AtomicInteger _nextInc = new AtomicInteger(
+            (new java.util.Random()).nextInt());
 
 }

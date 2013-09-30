@@ -2,7 +2,6 @@ package shardableobjectids;
 /*
  * Copyright Georg Koester 2012. Licensed under Apache License 2.0
  */
-import org.apache.commons.codec.binary.Base64Mod;
 import org.junit.Test;
 import sun.util.resources.CalendarData;
 
